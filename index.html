@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -31,60 +31,65 @@
   </style>
 </head>
 <body>
-  <h1>はげりん、こんにちは</h1>
-  <a class="p-3 mb-2 bg-danger text-white">ゆうきしんじゃった</a>
-  <a class="p-3 mb-2 bg-danger text-white">☆はげりん希少種☆はげりーーーーーーーーーーーーーーーーーーーーーん</a>
-  <a class="p-1 mb-2 bg-danger text-white">F*ck!B*tch!</a>
-  <a class="p-3 mb-2 bg-primary text-white">ゆうき復活した</a>
-  <h2>🎰 スロットマシン 🎰</h2>
+
+  <h1>🎰 スロットマシン 🎰</h1>
   <div class="slot">
     <div class="reel" id="reel1">🍒</div>
     <div class="reel" id="reel2">🍒</div>
     <div class="reel" id="reel3">🍒</div>
   </div>
-  <button onclick="spin()">スピン！</button>
+  <button id="spinButton" onclick="spin()">スピン！</button>
   <p id="result"></p>
-</body>
-<!-- Bootstrap CSS -->
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 
-<!-- Bootstrap Javascript(jQuery含む) -->
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-<script>
+  <script>
     const symbols = ["🍒", "🍋", "🔔", "🍉", "⭐", "💎"];
+    let intervals = [];
 
     function getRandomSymbol() {
       return symbols[Math.floor(Math.random() * symbols.length)];
     }
 
+    function startReel(id) {
+      return setInterval(() => {
+        document.getElementById(id).textContent = getRandomSymbol();
+      }, 100);
+    }
+
+    function stopReel(intervalId) {
+      clearInterval(intervalId);
+    }
+
     function spin() {
-      document.getElementById("result").textContent = ""; // 前回の結果を消す
+      // ボタンを無効化
+      document.getElementById("spinButton").disabled = true;
+      document.getElementById("result").textContent = "";
 
-      let count = 0;
-      const maxCount = 20;
-      const interval = 100;
+      // 各リールを回し始める
+      intervals[0] = startReel("reel1");
+      intervals[1] = startReel("reel2");
+      intervals[2] = startReel("reel3");
 
-      const timer = setInterval(() => {
-        // ランダムにシンボル変更
-        document.getElementById("reel1").textContent = getRandomSymbol();
-        document.getElementById("reel2").textContent = getRandomSymbol();
-        document.getElementById("reel3").textContent = getRandomSymbol();
+      // 順番に止める（0.5秒おき）
+      setTimeout(() => stopReel(intervals[0]), 2000); // 2秒後にリール1停止
+      setTimeout(() => stopReel(intervals[1]), 2500); // 2.5秒後にリール2停止
+      setTimeout(() => {
+        stopReel(intervals[2]);                      // 3秒後にリール3停止
 
-        count++;
-        if (count >= maxCount) {
-          clearInterval(timer); // スロット停止
+        // 最終結果判定
+        const r1 = document.getElementById("reel1").textContent;
+        const r2 = document.getElementById("reel2").textContent;
+        const r3 = document.getElementById("reel3").textContent;
 
-          // 最終のシンボル取得
-          const r1 = document.getElementById("reel1").textContent;
-          const r2 = document.getElementById("reel2").textContent;
-          const r3 = document.getElementById("reel3").textContent;
+        const resultText = (r1 === r2 && r2 === r3)
+          ? "🎉 大当たり！ 🎉"
+          : "😢 はずれ...";
+        document.getElementById("result").textContent = resultText;
 
-          const resultText = (r1 === r2 && r2 === r3) ? "🎉 大当たり！ 🎉" : "😢 はずれ...";
-          document.getElementById("result").textContent = resultText;
-        }
-      }, interval);
+        // ボタンを再び有効化
+        document.getElementById("spinButton").disabled = false;
+      }, 3000);
     }
   </script>
+
+</body>
 </html>
