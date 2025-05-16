@@ -1,12 +1,65 @@
-<!-- 中略（HTML + CSSは前回のままでOK） -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>スロットマシン（進化版＋スローダウン）</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      margin-top: 100px;
+    }
+    .slot {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .reel {
+      font-size: 50px;
+      width: 60px;
+      height: 60px;
+      border: 2px solid #000;
+      margin: 0 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.3s ease;
+    }
+    button {
+      font-size: 20px;
+      padding: 10px 20px;
+      margin: 5px;
+    }
+    #coin {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎰 スロットマシン 🎰</h1>
+  <div id="coin">💰 コイン: <span id="coinCount">50</span>枚</div>
+
+  <div class="slot">
+    <div class="reel" id="reel1">🍒</div>
+    <div class="reel" id="reel2">🍒</div>
+    <div class="reel" id="reel3">🍒</div>
+  </div>
+
+  <button id="spinButton" onclick="spin()">スピン！（3枚消費）</button>
+  <button id="addCoinButton" onclick="addCoin()" style="display:none;">＋50コイン</button>
+  <p id="result"></p>
+
+  <!-- 中略（HTML + CSSは前回のままでOK） -->
 
 <script>
   const symbolPool = [
-    { symbol: "🍒", weight: 50, reward: 4 },
-    { symbol: "🍋", weight: 100, reward: 3 },
-    { symbol: "🔔", weight: 150, reward: 15 },
-    { symbol: "⭐",  weight: 30, reward: 3 },
-    { symbol: "7️⃣", weight: 10, reward: 250 }
+    { symbol: "🍒", weight: 5, reward: 4 },
+    { symbol: "🍋", weight: 10, reward: 3 },
+    { symbol: "🔔", weight: 15, reward: 15 },
+    { symbol: "⭐",  weight: 3, reward: 3 },
+    { symbol: "7️⃣", weight: 1, reward: 250 }
   ];
 
   let coin = 50;
@@ -116,3 +169,7 @@
 
   updateCoinDisplay();
 </script>
+
+
+</body>
+</html>
