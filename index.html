@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>スロットマシン（進化版）</title>
+  <title>スロットマシン（進化版＋スローダウン）</title>
   <style>
     body {
       text-align: center;
@@ -23,6 +23,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      transition: opacity 0.3s ease;
     }
     button {
       font-size: 20px;
@@ -46,92 +47,96 @@
     <div class="reel" id="reel3">🍒</div>
   </div>
 
-  <button id="spinButton" onclick="spin()">スピン！（1枚消費）</button>
+  <button id="spinButton" onclick="spin()">スピン！（3枚消費）</button>
   <button id="addCoinButton" onclick="addCoin()" style="display:none;">＋50コイン</button>
   <p id="result"></p>
 
   <script>
-    // シンボルと出現確率設定（合計100）
     const symbolPool = [
-      { symbol: "🍒", weight: 5, reward: 4 },  // 高確率・低報酬
+      { symbol: "🍒", weight: 5, reward: 4 },
       { symbol: "🍋", weight: 10, reward: 3 },
       { symbol: "🔔", weight: 15, reward: 15 },
-      { symbol: "⭐", weight: 3, reward: 3 },
-      { symbol: "7️⃣", weight: 1,  reward: 250 }   // 超低確率・高報酬
+      { symbol: "⭐",  weight: 3, reward: 3 },
+      { symbol: "7️⃣", weight: 1, reward: 250 }
     ];
 
-    let intervals = [];
     let coin = 50;
 
     function updateCoinDisplay() {
       document.getElementById("coinCount").textContent = coin;
-      document.getElementById("addCoinButton").style.display = (coin <= 0) ? "inline-block" : "none";
+      document.getElementById("addCoinButton").style.display = (coin < 3) ? "inline-block" : "none";
     }
 
     function getRandomSymbol() {
       const totalWeight = symbolPool.reduce((sum, s) => sum + s.weight, 0);
       const rand = Math.random() * totalWeight;
       let sum = 0;
-      for (let i = 0; i < symbolPool.length; i++) {
-        sum += symbolPool[i].weight;
-        if (rand < sum) return symbolPool[i].symbol;
+      for (let s of symbolPool) {
+        sum += s.weight;
+        if (rand < sum) return s.symbol;
       }
     }
 
     function getReward(symbol) {
-      const found = symbolPool.find(s => s.symbol === symbol);
-      return found ? found.reward : 0;
+      const s = symbolPool.find(s => s.symbol === symbol);
+      return s ? s.reward : 0;
     }
 
-    function startReel(id) {
-      return setInterval(() => {
-        document.getElementById(id).textContent = getRandomSymbol();
-      }, 100);
+    function spinReel(reelId, duration) {
+      return new Promise(resolve => {
+        const reel = document.getElementById(reelId);
+        let delay = 50;
+        let elapsed = 0;
+
+        function animate() {
+          reel.textContent = getRandomSymbol();
+          elapsed += delay;
+
+          if (elapsed >= duration) {
+            reel.style.opacity = 0.5;
+            setTimeout(() => {
+              reel.style.opacity = 1;
+              resolve();
+            }, 200);
+          } else {
+            delay += 10;  // スローダウン
+            setTimeout(animate, delay);
+          }
+        }
+
+        animate();
+      });
     }
 
-    function stopReel(intervalId) {
-      clearInterval(intervalId);
-    }
-
-    function spin() {
-      if (coin <= 0) {
-        document.getElementById("result").textContent = "コインが足りません！";
+    async function spin() {
+      if (coin < 3) {
+        document.getElementById("result").textContent = "コインが足りません！（3枚必要）";
         return;
       }
 
-      // コインを1枚消費
-      coin--;
+      coin -= 3;
       updateCoinDisplay();
-
-      document.getElementById("spinButton").disabled = true;
       document.getElementById("result").textContent = "";
+      document.getElementById("spinButton").disabled = true;
 
-      // 各リールを回し始める
-      intervals[0] = startReel("reel1");
-      intervals[1] = startReel("reel2");
-      intervals[2] = startReel("reel3");
+      await spinReel("reel1", 1000);
+      await spinReel("reel2", 1300);
+      await spinReel("reel3", 1600);
 
-      // リール順に止める
-      setTimeout(() => stopReel(intervals[0]), 2000);
-      setTimeout(() => stopReel(intervals[1]), 2500);
-      setTimeout(() => {
-        stopReel(intervals[2]);
+      const r1 = document.getElementById("reel1").textContent;
+      const r2 = document.getElementById("reel2").textContent;
+      const r3 = document.getElementById("reel3").textContent;
 
-        const r1 = document.getElementById("reel1").textContent;
-        const r2 = document.getElementById("reel2").textContent;
-        const r3 = document.getElementById("reel3").textContent;
+      let resultText = "😢 はずれ...";
+      if (r1 === r2 && r2 === r3) {
+        const reward = getReward(r1);
+        coin += reward;
+        resultText = `🎉 ${r1.repeat(3)} そろった！ +${reward}コイン 🎉`;
+      }
 
-        let resultText = "😢 はずれ...";
-        if (r1 === r2 && r2 === r3) {
-          const reward = getReward(r1);
-          coin += reward;
-          updateCoinDisplay();
-          resultText = `🎉 ${r1.repeat(3)} そろった！ +${reward}コイン 🎉`;
-        }
-
-        document.getElementById("result").textContent = resultText;
-        document.getElementById("spinButton").disabled = false;
-      }, 3000);
+      document.getElementById("result").textContent = resultText;
+      updateCoinDisplay();
+      document.getElementById("spinButton").disabled = false;
     }
 
     function addCoin() {
