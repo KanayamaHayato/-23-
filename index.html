@@ -36,7 +36,7 @@
   <a class="p-3 mb-2 bg-danger text-white">☆はげりん希少種☆はげりーーーーーーーーーーーーーーーーーーーーーん</a>
   <a class="p-1 mb-2 bg-danger text-white">F*ck!B*tch!</a>
   <a class="p-3 mb-2 bg-primary text-white">ゆうき復活した</a>
-  <h1>🎰 スロットマシン 🎰</h1>
+  <h2>🎰 スロットマシン 🎰</h2>
   <div class="slot">
     <div class="reel" id="reel1">🍒</div>
     <div class="reel" id="reel2">🍒</div>
@@ -60,16 +60,31 @@
     }
 
     function spin() {
-      const r1 = getRandomSymbol();
-      const r2 = getRandomSymbol();
-      const r3 = getRandomSymbol();
+      document.getElementById("result").textContent = ""; // 前回の結果を消す
 
-      document.getElementById("reel1").textContent = r1;
-      document.getElementById("reel2").textContent = r2;
-      document.getElementById("reel3").textContent = r3;
+      let count = 0;
+      const maxCount = 20;
+      const interval = 100;
 
-      const resultText = (r1 === r2 && r2 === r3) ? "🎉 大当たり！ 🎉" : "😢 はずれ...";
-      document.getElementById("result").textContent = resultText;
+      const timer = setInterval(() => {
+        // ランダムにシンボル変更
+        document.getElementById("reel1").textContent = getRandomSymbol();
+        document.getElementById("reel2").textContent = getRandomSymbol();
+        document.getElementById("reel3").textContent = getRandomSymbol();
+
+        count++;
+        if (count >= maxCount) {
+          clearInterval(timer); // スロット停止
+
+          // 最終のシンボル取得
+          const r1 = document.getElementById("reel1").textContent;
+          const r2 = document.getElementById("reel2").textContent;
+          const r3 = document.getElementById("reel3").textContent;
+
+          const resultText = (r1 === r2 && r2 === r3) ? "🎉 大当たり！ 🎉" : "😢 はずれ...";
+          document.getElementById("result").textContent = resultText;
+        }
+      }, interval);
     }
   </script>
 </html>
