@@ -1,152 +1,118 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>スロットマシン（進化版＋スローダウン）</title>
-  <style>
-    body {
-      text-align: center;
-      font-family: sans-serif;
-      margin-top: 100px;
+<!-- 中略（HTML + CSSは前回のままでOK） -->
+
+<script>
+  const symbolPool = [
+    { symbol: "🍒", weight: 50, reward: 4 },
+    { symbol: "🍋", weight: 100, reward: 3 },
+    { symbol: "🔔", weight: 150, reward: 15 },
+    { symbol: "⭐",  weight: 30, reward: 3 },
+    { symbol: "7️⃣", weight: 10, reward: 250 }
+  ];
+
+  let coin = 50;
+  let isKakuhen = false;
+  let kakuhenCount = 0;
+
+  function updateCoinDisplay() {
+    document.getElementById("coinCount").textContent = coin;
+    document.getElementById("addCoinButton").style.display = (coin < 3 && !isKakuhen) ? "inline-block" : "none";
+  }
+
+  function getRandomSymbol() {
+    const totalWeight = symbolPool.reduce((sum, s) => sum + s.weight, 0);
+    const rand = Math.random() * totalWeight;
+    let sum = 0;
+    for (let s of symbolPool) {
+      sum += s.weight;
+      if (rand < sum) return s.symbol;
     }
-    .slot {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .reel {
-      font-size: 50px;
-      width: 60px;
-      height: 60px;
-      border: 2px solid #000;
-      margin: 0 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      transition: opacity 0.3s ease;
-    }
-    button {
-      font-size: 20px;
-      padding: 10px 20px;
-      margin: 5px;
-    }
-    #coin {
-      font-size: 18px;
-      margin-bottom: 10px;
-    }
-  </style>
-</head>
-<body>
+  }
 
-  <h1>🎰 スロットマシン 🎰</h1>
-  <div id="coin">💰 コイン: <span id="coinCount">50</span>枚</div>
+  function getReward(symbol) {
+    const s = symbolPool.find(s => s.symbol === symbol);
+    return s ? s.reward : 0;
+  }
 
-  <div class="slot">
-    <div class="reel" id="reel1">🍒</div>
-    <div class="reel" id="reel2">🍒</div>
-    <div class="reel" id="reel3">🍒</div>
-  </div>
+  function spinReel(reelId, duration) {
+    return new Promise(resolve => {
+      const reel = document.getElementById(reelId);
+      let delay = 50;
+      let elapsed = 0;
 
-  <button id="spinButton" onclick="spin()">スピン！（3枚消費）</button>
-  <button id="addCoinButton" onclick="addCoin()" style="display:none;">＋50コイン</button>
-  <p id="result"></p>
-
-  <script>
-    const symbolPool = [
-      { symbol: "🍒", weight: 5, reward: 4 },
-      { symbol: "🍋", weight: 10, reward: 3 },
-      { symbol: "🔔", weight: 15, reward: 15 },
-      { symbol: "⭐",  weight: 3, reward: 3 },
-      { symbol: "7️⃣", weight: 1, reward: 250 }
-    ];
-
-    let coin = 50;
-
-    function updateCoinDisplay() {
-      document.getElementById("coinCount").textContent = coin;
-      document.getElementById("addCoinButton").style.display = (coin < 3) ? "inline-block" : "none";
-    }
-
-    function getRandomSymbol() {
-      const totalWeight = symbolPool.reduce((sum, s) => sum + s.weight, 0);
-      const rand = Math.random() * totalWeight;
-      let sum = 0;
-      for (let s of symbolPool) {
-        sum += s.weight;
-        if (rand < sum) return s.symbol;
-      }
-    }
-
-    function getReward(symbol) {
-      const s = symbolPool.find(s => s.symbol === symbol);
-      return s ? s.reward : 0;
-    }
-
-    function spinReel(reelId, duration) {
-      return new Promise(resolve => {
-        const reel = document.getElementById(reelId);
-        let delay = 50;
-        let elapsed = 0;
-
-        function animate() {
-          reel.textContent = getRandomSymbol();
-          elapsed += delay;
-
-          if (elapsed >= duration) {
-            reel.style.opacity = 0.5;
-            setTimeout(() => {
-              reel.style.opacity = 1;
-              resolve();
-            }, 200);
-          } else {
-            delay += 10;  // スローダウン
-            setTimeout(animate, delay);
-          }
+      function animate() {
+        reel.textContent = getRandomSymbol();
+        elapsed += delay;
+        if (elapsed >= duration) {
+          reel.style.opacity = 0.5;
+          setTimeout(() => {
+            reel.style.opacity = 1;
+            resolve();
+          }, 200);
+        } else {
+          delay += 10;
+          setTimeout(animate, delay);
         }
+      }
 
-        animate();
-      });
+      animate();
+    });
+  }
+
+  async function spin() {
+    if (!isKakuhen && coin < 3) {
+      document.getElementById("result").textContent = "コインが足りません！（3枚必要）";
+      return;
     }
 
-    async function spin() {
-      if (coin < 3) {
-        document.getElementById("result").textContent = "コインが足りません！（3枚必要）";
-        return;
+    if (!isKakuhen) coin -= 3;
+    updateCoinDisplay();
+    document.getElementById("result").textContent = isKakuhen ? "🎯 確変中！" : "";
+    document.getElementById("spinButton").disabled = true;
+
+    await spinReel("reel1", 1000);
+    await spinReel("reel2", 1300);
+    await spinReel("reel3", 1600);
+
+    const r1 = document.getElementById("reel1").textContent;
+    const r2 = document.getElementById("reel2").textContent;
+    const r3 = document.getElementById("reel3").textContent;
+
+    let resultText = "😢 はずれ...";
+
+    if (r1 === r2 && r2 === r3) {
+      const reward = getReward(r1);
+      coin += reward;
+      resultText = `🎉 ${r1.repeat(3)} そろった！ +${reward}コイン 🎉`;
+
+      if (r1 === "7️⃣") {
+        isKakuhen = true;
+        kakuhenCount = 5;
+        resultText += "🔥 7️⃣確変モード突入！🔥";
       }
+    }
 
-      coin -= 3;
-      updateCoinDisplay();
-      document.getElementById("result").textContent = "";
-      document.getElementById("spinButton").disabled = true;
+    document.getElementById("result").textContent = resultText;
+    updateCoinDisplay();
 
-      await spinReel("reel1", 1000);
-      await spinReel("reel2", 1300);
-      await spinReel("reel3", 1600);
-
-      const r1 = document.getElementById("reel1").textContent;
-      const r2 = document.getElementById("reel2").textContent;
-      const r3 = document.getElementById("reel3").textContent;
-
-      let resultText = "😢 はずれ...";
-      if (r1 === r2 && r2 === r3) {
-        const reward = getReward(r1);
-        coin += reward;
-        resultText = `🎉 ${r1.repeat(3)} そろった！ +${reward}コイン 🎉`;
+    if (isKakuhen) {
+      kakuhenCount--;
+      if (kakuhenCount > 0) {
+        setTimeout(spin, 1000); // 自動スピン継続
+      } else {
+        isKakuhen = false;
+        document.getElementById("result").textContent += "\n💥確変終了！";
+        document.getElementById("spinButton").disabled = false;
       }
-
-      document.getElementById("result").textContent = resultText;
-      updateCoinDisplay();
+    } else {
       document.getElementById("spinButton").disabled = false;
     }
+  }
 
-    function addCoin() {
-      coin += 50;
-      updateCoinDisplay();
-      document.getElementById("result").textContent = "💰 50コインを追加しました！";
-    }
-
+  function addCoin() {
+    coin += 50;
     updateCoinDisplay();
-  </script>
+    document.getElementById("result").textContent = "💰 50コインを追加しました！";
+  }
 
-</body>
-</html>
+  updateCoinDisplay();
+</script>
