@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>スロットマシン</title>
+  <title>スロットマシン（コイン付き）</title>
   <style>
     body {
       text-align: center;
@@ -28,22 +28,34 @@
       font-size: 20px;
       padding: 10px 20px;
     }
+    #coin {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
 
   <h1>🎰 スロットマシン 🎰</h1>
+  <div id="coin">💰 コイン: <span id="coinCount">10</span>枚</div>
+
   <div class="slot">
     <div class="reel" id="reel1">🍒</div>
     <div class="reel" id="reel2">🍒</div>
     <div class="reel" id="reel3">🍒</div>
   </div>
-  <button id="spinButton" onclick="spin()">スピン！</button>
+
+  <button id="spinButton" onclick="spin()">スピン！（1枚消費）</button>
   <p id="result"></p>
 
   <script>
     const symbols = ["🍒", "🍋", "🔔", "🍉", "⭐", "💎"];
     let intervals = [];
+    let coin = 10;
+
+    function updateCoinDisplay() {
+      document.getElementById("coinCount").textContent = coin;
+    }
 
     function getRandomSymbol() {
       return symbols[Math.floor(Math.random() * symbols.length)];
@@ -60,7 +72,15 @@
     }
 
     function spin() {
-      // ボタンを無効化
+      if (coin <= 0) {
+        document.getElementById("result").textContent = "コインが足りません！";
+        return;
+      }
+
+      // コインを1枚消費
+      coin--;
+      updateCoinDisplay();
+
       document.getElementById("spinButton").disabled = true;
       document.getElementById("result").textContent = "";
 
@@ -69,23 +89,24 @@
       intervals[1] = startReel("reel2");
       intervals[2] = startReel("reel3");
 
-      // 順番に止める（0.5秒おき）
-      setTimeout(() => stopReel(intervals[0]), 2000); // 2秒後にリール1停止
-      setTimeout(() => stopReel(intervals[1]), 2500); // 2.5秒後にリール2停止
+      // 順番に止める
+      setTimeout(() => stopReel(intervals[0]), 2000);
+      setTimeout(() => stopReel(intervals[1]), 2500);
       setTimeout(() => {
-        stopReel(intervals[2]);                      // 3秒後にリール3停止
+        stopReel(intervals[2]);
 
-        // 最終結果判定
         const r1 = document.getElementById("reel1").textContent;
         const r2 = document.getElementById("reel2").textContent;
         const r3 = document.getElementById("reel3").textContent;
 
-        const resultText = (r1 === r2 && r2 === r3)
-          ? "🎉 大当たり！ 🎉"
-          : "😢 はずれ...";
-        document.getElementById("result").textContent = resultText;
+        let resultText = "😢 はずれ...";
+        if (r1 === r2 && r2 === r3) {
+          coin += 3; // 当たりで+3枚
+          resultText = "🎉 大当たり！ +3コイン！ 🎉";
+          updateCoinDisplay();
+        }
 
-        // ボタンを再び有効化
+        document.getElementById("result").textContent = resultText;
         document.getElementById("spinButton").disabled = false;
       }, 3000);
     }
