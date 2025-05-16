@@ -2,12 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>スロットマシン（進化版＋スローダウン）</title>
+  <title>スロットマシン（ARTモード付き）</title>
   <style>
     body {
       text-align: center;
       font-family: sans-serif;
       margin-top: 100px;
+      background-color: #fff;
+      transition: background-color 0.5s ease;
     }
     .slot {
       display: flex;
@@ -51,17 +53,26 @@
   <button id="addCoinButton" onclick="addCoin()" style="display:none;">＋50コイン</button>
   <p id="result"></p>
 
-  <!-- 中略（HTML + CSSは前回のままでOK） -->
-
 <script>
-  const symbolPool = [
-    { symbol: "🍒", weight: 5, reward: 4 },
-    { symbol: "🍋", weight: 10, reward: 3 },
-    { symbol: "🔔", weight: 15, reward: 15 },
-    { symbol: "⭐",  weight: 3, reward: 3 },
-    { symbol: "7️⃣", weight: 1, reward: 250 }
+  // 通常の出現確率
+  const normalSymbolPool = [
+    { symbol: "🍒", weight: 50, reward: 4 },
+    { symbol: "🍋", weight: 100, reward: 3 },
+    { symbol: "🔔", weight: 150, reward: 15 },
+    { symbol: "⭐",  weight: 30, reward: 3 },
+    { symbol: "7️⃣", weight: 60, reward: 0 }
   ];
 
+  // ARTモード時の確率（🍋と🔔強化）
+  const kakuhenSymbolPool = [
+    { symbol: "🍒", weight: 20, reward: 4 },
+    { symbol: "🍋", weight: 30, reward: 3 },
+    { symbol: "🔔", weight: 400, reward: 15 },
+    { symbol: "⭐",  weight: 20, reward: 3 },
+    { symbol: "7️⃣", weight: 10, reward: 0 }
+  ];
+
+  let currentSymbolPool = normalSymbolPool;
   let coin = 50;
   let isKakuhen = false;
   let kakuhenCount = 0;
@@ -72,17 +83,17 @@
   }
 
   function getRandomSymbol() {
-    const totalWeight = symbolPool.reduce((sum, s) => sum + s.weight, 0);
+    const totalWeight = currentSymbolPool.reduce((sum, s) => sum + s.weight, 0);
     const rand = Math.random() * totalWeight;
     let sum = 0;
-    for (let s of symbolPool) {
+    for (let s of currentSymbolPool) {
       sum += s.weight;
       if (rand < sum) return s.symbol;
     }
   }
 
   function getReward(symbol) {
-    const s = symbolPool.find(s => s.symbol === symbol);
+    const s = currentSymbolPool.find(s => s.symbol === symbol);
     return s ? s.reward : 0;
   }
 
@@ -119,7 +130,7 @@
 
     if (!isKakuhen) coin -= 3;
     updateCoinDisplay();
-    document.getElementById("result").textContent = isKakuhen ? "🎯 確変中！" : "";
+    document.getElementById("result").textContent = isKakuhen ? "🎯 ARTモード中！" : "";
     document.getElementById("spinButton").disabled = true;
 
     await spinReel("reel1", 1000);
@@ -140,7 +151,9 @@
       if (r1 === "7️⃣") {
         isKakuhen = true;
         kakuhenCount = 5;
-        resultText += "🔥 7️⃣確変モード突入！🔥";
+        currentSymbolPool = kakuhenSymbolPool;
+        document.body.style.backgroundColor = "#ffe0e0";
+        resultText += "🔥 7️⃣確変ARTモード突入！🔥";
       }
     }
 
@@ -150,10 +163,12 @@
     if (isKakuhen) {
       kakuhenCount--;
       if (kakuhenCount > 0) {
-        setTimeout(spin, 1000); // 自動スピン継続
+        setTimeout(spin, 1000); // 自動スピン
       } else {
         isKakuhen = false;
-        document.getElementById("result").textContent += "\n💥確変終了！";
+        currentSymbolPool = normalSymbolPool;
+        document.body.style.backgroundColor = "#fff";
+        document.getElementById("result").textContent += "\n💥 ART終了！通常モードへ";
         document.getElementById("spinButton").disabled = false;
       }
     } else {
@@ -169,7 +184,6 @@
 
   updateCoinDisplay();
 </script>
-
 
 </body>
 </html>
